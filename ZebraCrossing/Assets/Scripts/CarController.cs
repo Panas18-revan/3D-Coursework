@@ -6,6 +6,8 @@ public class CarController : MonoBehaviour
     public Transform stopPoint; // where car should stop
     public TrafficLightController trafficLight;
 
+    public GameObject hitMessageUI; // 🔥 added for UI message
+
     private bool shouldStop = false;
 
     void Update()
@@ -37,6 +39,16 @@ public class CarController : MonoBehaviour
         else
         {
             shouldStop = false;
+        }
+    }
+
+    // 🔥 NEW PART: collision detection
+    void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Player"))
+        {
+            hitMessageUI.SetActive(true);
+            Time.timeScale = 0f; // pause game
         }
     }
 }
