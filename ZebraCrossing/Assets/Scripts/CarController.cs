@@ -3,10 +3,12 @@ using UnityEngine;
 public class CarController : MonoBehaviour
 {
     public float speed = 5f;
-    public Transform stopPoint; // where car should stop
+    public Transform stopPoint;
     public TrafficLightController trafficLight;
+    public GameObject hitMessageUI;
 
-    public GameObject hitMessageUI; // 🔥 added for UI message
+    public Transform[] waypoints; // 🔥 drag Waypoint1 and Waypoint2 here
+    private int currentWaypoint = 0;
 
     private bool shouldStop = false;
 
@@ -16,7 +18,33 @@ public class CarController : MonoBehaviour
 
         if (!shouldStop)
         {
-            transform.Translate(Vector3.forward * speed * Time.deltaTime);
+            MoveToWaypoint();
+        }
+    }
+
+    void MoveToWaypoint()
+    {
+        if (waypoints.Length == 0) return;
+
+        Transform target = waypoints[currentWaypoint];
+
+        // Move toward waypoint
+        transform.position = Vector3.MoveTowards(
+            transform.position, target.position, speed * Time.deltaTime);
+
+        // Rotate toward waypoint
+        Vector3 dir = target.position - transform.position;
+        if (dir.magnitude > 0.01f)
+        {
+            Quaternion targetRot = Quaternion.LookRotation(dir);
+            transform.rotation = Quaternion.Slerp(
+                transform.rotation, targetRot, Time.deltaTime * 5f);
+        }
+
+        // Next waypoint when close enough
+        if (Vector3.Distance(transform.position, target.position) < 0.5f)
+        {
+            currentWaypoint = (currentWaypoint + 1) % waypoints.Length;
         }
     }
 
@@ -42,13 +70,12 @@ public class CarController : MonoBehaviour
         }
     }
 
-    // 🔥 NEW PART: collision detection
     void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.CompareTag("Player"))
         {
             hitMessageUI.SetActive(true);
-            Time.timeScale = 0f; // pause game
+            Time.timeScale = 0f;
         }
     }
 }
