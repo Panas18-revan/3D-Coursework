@@ -3,9 +3,13 @@ using UnityEngine;
 public class CarController : MonoBehaviour
 {
     public float speed = 5f;
+    public float rotateSpeed = 5f;
     public Transform stopPoint;
     public TrafficLightController trafficLight;
     public TMPro.TextMeshProUGUI hitMessageUI;
+
+    public Transform[] waypoints;
+    private int currentWaypoint = 0;
 
     private bool shouldStop = false;
 
@@ -15,7 +19,33 @@ public class CarController : MonoBehaviour
 
         if (!shouldStop)
         {
-            transform.Translate(Vector3.forward * speed * Time.deltaTime);
+            FollowWaypoints();
+        }
+    }
+
+    void FollowWaypoints()
+    {
+        if (waypoints.Length == 0) return;
+
+        Transform target = waypoints[currentWaypoint];
+
+        // Move toward waypoint
+        transform.position = Vector3.MoveTowards(transform.position, target.position, speed * Time.deltaTime);
+
+        // Rotate toward waypoint
+        Vector3 direction = target.position - transform.position;
+        if (direction != Vector3.zero)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(direction);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotateSpeed * Time.deltaTime);
+        }
+
+        // Check if reached waypoint
+        if (Vector3.Distance(transform.position, target.position) < 0.5f)
+        {
+            currentWaypoint++;
+            if (currentWaypoint >= waypoints.Length)
+                currentWaypoint = 0; // Loop back
         }
     }
 
