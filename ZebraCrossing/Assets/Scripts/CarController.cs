@@ -4,8 +4,12 @@ public class CarController : MonoBehaviour
 {
     public float speed = 5f;
     public float rotateSpeed = 5f;
-    public Transform stopPoint;
-    public TrafficLightController trafficLight;
+
+    // Remove single stopPoint and trafficLight
+    // Add arrays instead:
+    public Transform[] stopPoints;
+    public TrafficLightController[] trafficLights;
+
     public TMPro.TextMeshProUGUI hitMessageUI;
 
     public Transform[] waypoints;
@@ -29,10 +33,8 @@ public class CarController : MonoBehaviour
 
         Transform target = waypoints[currentWaypoint];
 
-        // Move toward waypoint
         transform.position = Vector3.MoveTowards(transform.position, target.position, speed * Time.deltaTime);
 
-        // Rotate toward waypoint
         Vector3 direction = target.position - transform.position;
         if (direction != Vector3.zero)
         {
@@ -40,34 +42,31 @@ public class CarController : MonoBehaviour
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotateSpeed * Time.deltaTime);
         }
 
-        // Check if reached waypoint
         if (Vector3.Distance(transform.position, target.position) < 0.5f)
         {
             currentWaypoint++;
             if (currentWaypoint >= waypoints.Length)
-                currentWaypoint = 0; // Loop back
+                currentWaypoint = 0;
         }
     }
 
     void CheckTrafficLight()
     {
-        float distance = Vector3.Distance(transform.position, stopPoint.position);
+        shouldStop = false; // Reset every frame
 
-        if (distance < 5f)
+        for (int i = 0; i < stopPoints.Length; i++)
         {
-            if (trafficLight.currentState == TrafficLightController.LightState.Red ||
-                trafficLight.currentState == TrafficLightController.LightState.Yellow)
+            float distance = Vector3.Distance(transform.position, stopPoints[i].position);
+
+            if (distance < 5f)
             {
-                shouldStop = true;
+                if (trafficLights[i].currentState == TrafficLightController.LightState.Red ||
+                    trafficLights[i].currentState == TrafficLightController.LightState.Yellow)
+                {
+                    shouldStop = true;
+                    break; // No need to check further
+                }
             }
-            else
-            {
-                shouldStop = false;
-            }
-        }
-        else
-        {
-            shouldStop = false;
         }
     }
 
