@@ -1,12 +1,11 @@
 using UnityEngine;
+using System.Collections;
 
 public class CarController : MonoBehaviour
 {
     public float speed = 5f;
     public float rotateSpeed = 5f;
 
-    // Remove single stopPoint and trafficLight
-    // Add arrays instead:
     public Transform[] stopPoints;
     public TrafficLightController[] trafficLights;
 
@@ -52,7 +51,7 @@ public class CarController : MonoBehaviour
 
     void CheckTrafficLight()
     {
-        shouldStop = false; // Reset every frame
+        shouldStop = false;
 
         for (int i = 0; i < stopPoints.Length; i++)
         {
@@ -64,7 +63,7 @@ public class CarController : MonoBehaviour
                     trafficLights[i].currentState == TrafficLightController.LightState.Yellow)
                 {
                     shouldStop = true;
-                    break; // No need to check further
+                    break;
                 }
             }
         }
@@ -74,13 +73,47 @@ public class CarController : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
+            // 1. Disable all player scripts
+            foreach (var script in other.GetComponents<MonoBehaviour>())
+            {
+                script.enabled = false;
+            }
+
+            // 2. Disable Animator
+            Animator anim = other.GetComponent<Animator>();
+            if (anim != null) anim.enabled = false;
+
+            // 3. Disable CharacterController
+            var cc = other.GetComponent<CharacterController>();
+            if (cc != null) cc.enabled = false;
+
+            // 4. Add Rigidbody
+            Rigidbody rb = other.gameObject.AddComponent<Rigidbody>();
+            rb.constraints = RigidbodyConstraints.None;
+            rb.centerOfMass = new Vector3(0, 1.5f, 0); // high center of mass = tips over
+
+            // 5. Launch player
+            Vector3 force = transform.forward * 12f + Vector3.up * 7f;
+            rb.AddForce(force, ForceMode.Impulse);
+
+            // 6. Spin/tumble forward so it lands face down
+            rb.AddTorque(Vector3.right * 5f, ForceMode.Impulse);
+
+            // 7. Show UI
             if (hitMessageUI != null)
             {
                 hitMessageUI.gameObject.SetActive(true);
                 hitMessageUI.text = "You Died!";
             }
 
-            Time.timeScale = 0f;
+            // 8. Freeze after delay
+            StartCoroutine(FreezeAfterHit());
         }
+    }
+
+    IEnumerator FreezeAfterHit()
+    {
+        yield return new WaitForSecondsRealtime(1.5f);
+        Time.timeScale = 0f;
     }
 }

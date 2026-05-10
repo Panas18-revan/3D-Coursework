@@ -4,61 +4,30 @@ public class DayNightCycle : MonoBehaviour
 {
     public Light sun;
 
-    public float switchTime = 10f; // 8 minutes
-
-    private float timer;
-    private bool isNight = false;
-
-    void Start()
-    {
-        SetDay();
-    }
+    // Full day duration in seconds
+    public float dayDuration = 480f; // 8 minutes
 
     void Update()
     {
-        timer += Time.deltaTime;
+        // Rotate sun slowly
+        sun.transform.Rotate(Vector3.right * (360f / dayDuration) * Time.deltaTime);
 
-        if (timer >= switchTime)
+        // Get current sun angle
+        float angle = sun.transform.rotation.eulerAngles.x;
+
+        // DAYTIME
+        if (angle > 10 && angle < 170)
         {
-            timer = 0;
-            isNight = !isNight;
+            sun.intensity = 1f;
 
-            if (isNight)
-            {
-                SetNight();
-            }
-            else
-            {
-                SetDay();
-            }
+            RenderSettings.ambientLight = Color.white;
         }
-    }
+        // NIGHTTIME
+        else
+        {
+            sun.intensity = 0.05f;
 
-    void SetNight()
-    {
-        // Make environment darker
-        sun.intensity = 0.03f;
-
-        // Night atmosphere color
-        RenderSettings.ambientLight = new Color(0.07f, 0.07f, 0.12f);
-
-        // Move sun angle lower
-        sun.transform.rotation = Quaternion.Euler(340f, -30f, 0f);
-
-        Debug.Log("Night Mode");
-    }
-
-    void SetDay()
-    {
-        // Bright daytime
-        sun.intensity = 1f;
-
-        // Day atmosphere
-        RenderSettings.ambientLight = Color.white;
-
-        // Normal sun angle
-        sun.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
-
-        Debug.Log("Day Mode");
+            RenderSettings.ambientLight = new Color(0.07f, 0.07f, 0.12f);
+        }
     }
 }
