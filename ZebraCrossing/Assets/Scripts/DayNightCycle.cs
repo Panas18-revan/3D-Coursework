@@ -1,3 +1,4 @@
+
 using UnityEngine;
 
 public class DayNightCycle : MonoBehaviour
@@ -14,6 +15,7 @@ public class DayNightCycle : MonoBehaviour
 
         // Get current sun angle
         float angle = sun.transform.rotation.eulerAngles.x;
+
 
         // DAYTIME
         if (angle > 10 && angle < 170)
