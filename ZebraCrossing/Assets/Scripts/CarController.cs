@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using UnityEngine.SceneManagement;
 
 public class CarController : MonoBehaviour
 {
@@ -15,9 +16,16 @@ public class CarController : MonoBehaviour
     private int currentWaypoint = 0;
 
     private bool shouldStop = false;
+    private bool playerHit = false;
 
     void Update()
     {
+        if (playerHit && Input.GetKeyDown(KeyCode.R))
+        {
+            RestartScene();
+            return;
+        }
+
         CheckTrafficLight();
 
         if (!shouldStop)
@@ -71,8 +79,10 @@ public class CarController : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player"))
+        if (other.CompareTag("Player") && !playerHit)
         {
+            playerHit = true;
+
             // 1. Disable all player scripts
             foreach (var script in other.GetComponents<MonoBehaviour>())
             {
@@ -99,14 +109,8 @@ public class CarController : MonoBehaviour
             // 6. Spin/tumble forward so it lands face down
             rb.AddTorque(Vector3.right * 5f, ForceMode.Impulse);
 
-            // 7. Show UI
-            if (hitMessageUI != null)
-            {
-                hitMessageUI.gameObject.SetActive(true);
-                hitMessageUI.text = "You Died!";
-            }
-
-            // 8. Freeze after delay
+            // 7. Show death message, then freeze and show restart prompt after delay
+            ShowHitMessage("You Died!");
             StartCoroutine(FreezeAfterHit());
         }
     }
@@ -114,6 +118,34 @@ public class CarController : MonoBehaviour
     IEnumerator FreezeAfterHit()
     {
         yield return new WaitForSecondsRealtime(1.5f);
+
+        if (hitMessageUI != null)
+        {
+            ShowHitMessage("You Died!\nPress R to Restart");
+        }
+
         Time.timeScale = 0f;
+    }
+
+    void ShowHitMessage(string message)
+    {
+        if (hitMessageUI == null) return;
+
+        RectTransform rectTransform = hitMessageUI.rectTransform;
+        rectTransform.anchorMin = new Vector2(0.5f, 1f);
+        rectTransform.anchorMax = new Vector2(0.5f, 1f);
+        rectTransform.pivot = new Vector2(0.5f, 1f);
+        rectTransform.anchoredPosition = new Vector2(0f, -30f);
+
+        hitMessageUI.fontSize = 20f;
+        hitMessageUI.alignment = TMPro.TextAlignmentOptions.Top;
+        hitMessageUI.gameObject.SetActive(true);
+        hitMessageUI.text = message;
+    }
+
+    void RestartScene()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }
